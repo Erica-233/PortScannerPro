@@ -14,7 +14,8 @@ import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 控制台用户界面 - 视图层
+ * 控制台用户界面 - 终极修复版
+ * 功能：强制打印端口状态 + 调试信息 + 自动交换 IP + 防 null
  */
 public class ConsoleUI {
 
@@ -31,13 +32,36 @@ public class ConsoleUI {
 
         int mode = chooseMode();
         String startIp = "127.0.0.1", endIp = "127.0.0.1";
+
         if (mode == 2) {
             startIp = inputIp("起始IP");
             endIp = inputIp("结束IP");
+
+            // 自动交换 IP 顺序
+            long startNum = IpRangeGenerator.ipToLong(startIp);
+            long endNum = IpRangeGenerator.ipToLong(endIp);
+            if (startNum > endNum) {
+                System.out.println("检测到起始IP大于结束IP，自动交换顺序...");
+                String temp = startIp;
+                startIp = endIp;
+                endIp = temp;
+            }
         }
 
         int startPort = inputPort("起始端口", 1, 65535);
         int endPort = inputPort("结束端口", startPort, 65535);
+
+        // 耗时警告
+        int totalPorts = endPort - startPort + 1;
+        if (totalPorts > 1000) {
+            System.out.println("警告：将扫描 " + totalPorts + " 个端口，可能耗时较长。");
+            System.out.print("继续？(y/n): ");
+            if (!scanner.nextLine().trim().equalsIgnoreCase("y")) {
+                System.out.println("扫描已取消。");
+                scannerService.shutdown();
+                return;
+            }
+        }
 
         startScanning(startIp, endIp, startPort, endPort);
         scannerService.shutdown();
@@ -54,10 +78,25 @@ public class ConsoleUI {
             LoggerUtil.info("开始扫描 IP: " + ip);
 
             List<ScanResult> results = scannerService.scanHost(ip, startPort, endPort);
+
+            // 关键调试：打印结果数量
+            System.out.println("调试: 收到 " + results.size() + " 个扫描结果");
+
+            if (results.isEmpty()) {
+                System.out.println("  [警告] 没有收到任何结果！");
+            }
+
             for (ScanResult r : results) {
+                if (r == null) {
+                    System.out.println("  [错误] 结果为 null！");
+                    continue;
+                }
+
+                // 强制打印每个端口状态
+                System.out.println("  " + r.toString());  // 强制调用 toString()
+
                 if (r.isOpen()) {
-                    System.out.println("  " + r);
-                    totalOpen.incrementAndGet();  // 线程安全递增
+                    totalOpen.incrementAndGet();
                 } else {
                     totalClosed.incrementAndGet();
                 }
@@ -99,7 +138,7 @@ public class ConsoleUI {
             System.out.print("输入" + prompt + ": ");
             String ip = scanner.nextLine().trim();
             if (Validator.isValidIp(ip)) return ip;
-            System.out.println("IP格式错误！请重新输入。");
+            System.out.println("IP格式错误！请重新输入（示例: 192.168.1.1）。");
         }
     }
 

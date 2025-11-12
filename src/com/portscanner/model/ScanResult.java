@@ -1,6 +1,8 @@
+
 package com.portscanner.model;
+
 /**
- * 扫描结果实体类
+ * 扫描结果模型
  */
 public class ScanResult {
     private final String ip;
@@ -15,15 +17,19 @@ public class ScanResult {
         this.responseTimeMs = responseTimeMs;
     }
 
-    // Getters
     public String getIp() { return ip; }
     public int getPort() { return port; }
     public boolean isOpen() { return isOpen; }
     public long getResponseTimeMs() { return responseTimeMs; }
 
+    /**
+     * 关键：toString() 方法，用于打印
+     */
     @Override
     public String toString() {
         return String.format("[%s:%d] %s (响应: %dms)",
-                ip, port, isOpen ? "开放" : "关闭", responseTimeMs);
+                ip, port,
+                isOpen ? "开放" : "关闭",
+                responseTimeMs);
     }
 }
