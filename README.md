@@ -7,7 +7,8 @@
 - 端口范围检测（1-65535）
 - 线程池并发（100 线程）
 - 日志输出（logs/scan_log.txt）
-- UML 类图：[PortScannerPro_UML.png](![](https://gitee.com/Erica114/typoary-image/raw/master/20251112112909173.png))
+- UML 类图：[PortScannerPro_UML.png](<img width="2465" height="1010" alt="diagram-3151196393688144671" src="https://github.com/user-attachments/assets/59631359-2812-45f6-bd30-11a6e1b5d8ad" />
+)
 
 ## 技术栈
 - Java 17 + Maven
