@@ -1,0 +1,116 @@
+@startuml
+' =============================================
+' PortScannerPro UML 类图
+' 作者: Grok
+' 日期: 2025-11-12
+' =============================================
+
+skinparam backgroundColor #1E1E1E
+skinparam classAttributeIconSize 0
+skinparam dpi 300
+skinparam shadowing false
+skinparam nodesep 60
+skinparam ranksep 80
+skinparam linetype ortho
+
+package "com.portscanner" #2D2D2D {
+
+    class App {
+        +main(args: String[]): void
+    }
+
+    package model #3A3A3A {
+        class ScanResult {
+            -ip: String
+            -port: int
+            -isOpen: boolean
+            -responseTimeMs: long
+            +getIp(): String
+            +getPort(): int
+            +isOpen(): boolean
+            +getResponseTimeMs(): long
+            +toString(): String
+        }
+    }
+
+    package service #3A3A3A {
+        class PortScannerService {
+            -executor: ExecutorService
+            -TIMEOUT_MS: int = 1000
+            +scanHost(ip: String, startPort: int, endPort: int): List<ScanResult>
+            -isPortOpen(ip: String, port: int): boolean
+            +shutdown(): void
+        }
+
+        class IpRangeGenerator {
+            {static} +getIpStream(startIp: String, endIp: String): LongStream
+            {static} +ipToLong(ip: String): long
+            {static} +longToIp(ip: long): String
+        }
+    }
+
+    package ui #3A3A3A {
+        class ConsoleUI {
+            -scanner: Scanner
+            -scannerService: PortScannerService
+            +start(): void
+            -startScanning(startIp: String, endIp: String, startPort: int, endPort: int): void
+            -printBanner(): void
+            -printWelcome(): void
+            -chooseMode(): int
+            -inputIp(prompt: String): String
+            -inputPort(prompt: String, min: int, max: int): int
+            -printSummary(startTime: long, open: int, closed: int): void
+            -printSecurityWarning(): void
+        }
+    }
+
+    package util #3A3A3A {
+        class LoggerUtil {
+            {static} -LOGGER: Logger
+            {static} +info(msg: String): void
+        }
+
+        class Validator {
+            {static} +isValidIp(ip: String): boolean
+            {static} +readInt(sc: Scanner, min: int, max: int): int
+        }
+    }
+}
+
+' =============================================
+' 依赖关系
+' =============================================
+
+App --> ConsoleUI : creates
+ConsoleUI --> PortScannerService : uses
+ConsoleUI --> IpRangeGenerator : uses
+ConsoleUI --> LoggerUtil : logs
+ConsoleUI --> Validator : validates input
+ConsoleUI --> ScanResult : displays
+
+PortScannerService --> ScanResult : returns
+PortScannerService --> "java.net.Socket" : uses
+PortScannerService --> "java.util.concurrent.ExecutorService" : manages
+
+IpRangeGenerator --> "java.util.stream.LongStream" : returns
+
+LoggerUtil --> "java.util.logging.Logger" : uses
+LoggerUtil --> "java.util.logging.FileHandler" : writes to file
+
+note right of ConsoleUI::printBanner
+  从 classpath 加载 banner.txt
+  使用 getResourceAsStream
+end note
+
+note right of LoggerUtil
+  自动创建 logs/ 目录
+  输出到 logs/scan_log.txt
+end note
+
+note bottom of PortScannerService
+  并发扫描：100线程池
+  1秒超时控制
+end note
+
+@enduml
